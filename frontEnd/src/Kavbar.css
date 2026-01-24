@@ -1,0 +1,67 @@
+/* Center menu items */
+.navbar-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* All menu items same width */
+.navbar-nav .nav-item {
+  min-width: 160px; /* adjust to match Services Completed width */
+  text-align: center;
+}
+
+/* Menu item hover */
+.menu-item {
+  cursor: pointer;
+  padding: 0.5rem 0; /* vertical padding only */
+  border: 1px solid #FFD700;
+  border-radius: 5px;
+  width: 115%;
+  display: inline-block;
+  transition: 0.3s;
+}
+
+.menu-item:hover {
+  background-color: #FFD700;
+  color: black;
+}
+
+/* Dropdown container */
+.nav-item.dropdown {
+  position: relative;
+}
+
+/* Dropdown list */
+.dropdown-menu-custom {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #000;
+  border: 1px solid #FFD700;
+  width: 115%; /* match Place Order width */
+  padding: 0.3rem 0;
+  list-style: none;
+  z-index: 1000;
+}
+
+/* Dropdown items */
+.dropdown-menu-custom li .dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.dropdown-menu-custom li .dropdown-item:hover {
+  background-color: #FFD700;
+  color: black;
+}
+
+/* Show dropdown on hover */
+.nav-item.dropdown:hover .dropdown-menu-custom {
+  display: block;
+}

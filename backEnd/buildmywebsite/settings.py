@@ -8,31 +8,39 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # =========================
+# Environment Detection
+# =========================
+ON_RAILWAY = os.environ.get("RAILWAY_ENV") == "production"
+
+# =========================
 # Core settings
 # =========================
-DEBUG = False
-ALLOWED_HOSTS = ["*"]
+DEBUG = not ON_RAILWAY
+ALLOWED_HOSTS = ["*"] if ON_RAILWAY else ["localhost", "127.0.0.1"]
 
-# Django requires these
-ROOT_URLCONF = "buildmywebsite.urls"       # <-- your urls.py location
+ROOT_URLCONF = "buildmywebsite.urls"
 WSGI_APPLICATION = "buildmywebsite.wsgi.application"
 
 # =========================
-# Database (PostgreSQL on Railway)
+# Database
 # =========================
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
-
-# =========================
-# Media files (optional)
-# =========================
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+if ON_RAILWAY:
+    # Production: Railway PostgreSQL
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ.get("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # Local development: SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # =========================
 # Installed apps
@@ -62,32 +70,4 @@ MIDDLEWARE = [
 ]
 
 # =========================
-# Custom User
-# =========================
-AUTH_USER_MODEL = "website.User"
-
-# =========================
-# Authentication Backends (custom)
-# =========================
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",  # default
-    "website.auth_website.EmailBackend",
-    "website.backends.EmailBackend",
-]
-
-# =========================
-# Django REST Framework
-# =========================
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ],
-}
-
-# =========================
-# Optional security (production)
-# =========================
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+# Templates (

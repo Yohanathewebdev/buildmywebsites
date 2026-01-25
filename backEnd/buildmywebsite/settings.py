@@ -2,19 +2,26 @@ import os
 from pathlib import Path
 import dj_database_url
 
+# =========================
+# Paths
+# =========================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # =========================
-# Core
+# Core settings
 # =========================
 DEBUG = False
-ALLOWED_HOSTS = ["*"]  # Railway requires this
+ALLOWED_HOSTS = ["*"]
+
+# Django requires these
+ROOT_URLCONF = "buildmywebsite.urls"       # <-- your urls.py location
+WSGI_APPLICATION = "buildmywebsite.wsgi.application"
 
 # =========================
 # Database (PostgreSQL on Railway)
 # =========================
 DATABASES = {
-    'default': dj_database_url.parse(
+    "default": dj_database_url.parse(
         os.environ.get("DATABASE_URL"),
         conn_max_age=600,
         ssl_require=True
@@ -22,7 +29,7 @@ DATABASES = {
 }
 
 # =========================
-# Media (optional)
+# Media files (optional)
 # =========================
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -36,7 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",  # still keep for DRF browsable API
+    "django.contrib.staticfiles",  # needed for admin & DRF browsable API
     "rest_framework",
     "website",  # your custom app
 ]
@@ -55,7 +62,7 @@ MIDDLEWARE = [
 ]
 
 # =========================
-# Custom User Model
+# Custom User
 # =========================
 AUTH_USER_MODEL = "website.User"
 
@@ -77,3 +84,10 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ],
 }
+
+# =========================
+# Optional security (production)
+# =========================
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False

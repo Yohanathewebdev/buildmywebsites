@@ -2,83 +2,56 @@ import os
 from pathlib import Path
 import dj_database_url
 
-
-
-SECRET_KEY = "ni@4=gb&$u*u3qxoqdnc9f-)zvfpy*pn&q-091m434&ranbwld"
 # =========================
-# Paths
+# Base directory
 # =========================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # =========================
-# Environment Detection
+# Environment detection
 # =========================
-
-
 ON_RAILWAY = "RAILWAY_STATIC_URL" in os.environ
+
+# =========================
+# Security
+# =========================
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "unsafe-dev-secret-key-change-this"
+)
+
 DEBUG = not ON_RAILWAY
 
-CORS_ALLOW_CREDENTIALS = True
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-    ],
-}
-
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "buildmywebsites-production.up.railway.app",
+]
 
 # =========================
-# Core settings
-# =========================
-DEBUG = not ON_RAILWAY
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'buildmywebsites-production.up.railway.app']
-
-
-ROOT_URLCONF = "buildmywebsite.urls"
-WSGI_APPLICATION = "buildmywebsite.wsgi.application"
-
-# =========================
-# Database
-# =========================
-if ON_RAILWAY:
-    # Production: Railway PostgreSQL
-    DATABASES = {
-        "default": dj_database_url.parse(
-            os.environ.get("DATABASE_URL"),
-            conn_max_age=600,
-            ssl_require=True
-        )
-    }
-else:
-    # Local development: SQLite
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
-
-# =========================
-# Installed apps
+# Application definition
 # =========================
 INSTALLED_APPS = [
-    'corsheaders',
+    "corsheaders",
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",  # needed for admin & DRF browsable API
+    "django.contrib.staticfiles",
+
     "rest_framework",
-    "website",  # your custom app
+
+    "website",
 ]
 
-# =========================
-# Middleware
-# =========================
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    "corsheaders.middleware.CorsMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -87,18 +60,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "https://your-react-app.vercel.app",
-]
+ROOT_URLCONF = "buildmywebsite.urls"
 
-# =========================
-# Templates (needed for admin & DRF browsable API)
-# =========================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # optional for custom templates
-        "APP_DIRS": True,                  # finds templates in apps automatically
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -110,49 +78,107 @@ TEMPLATES = [
     },
 ]
 
+WSGI_APPLICATION = "buildmywebsite.wsgi.application"
+
 # =========================
-# Static & Media files
+# Database
 # =========================
-STATIC_URL = "/static/"
-# No STATICFILES_DIRS needed if React handles frontend
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+if ON_RAILWAY:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ.get("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+# =========================
+# Password validation
+# =========================
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
 # =========================
 # Custom User
 # =========================
 AUTH_USER_MODEL = "website.User"
 
-# =========================
-# Authentication Backends
-# =========================
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",  # default
+    "django.contrib.auth.backends.ModelBackend",
     "website.auth_website.EmailBackend",
     "website.backends.EmailBackend",
 ]
 
 # =========================
-# Django REST Framework
+# Django REST Framework (API SAFE FOR REACT)
 # =========================
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
     ],
 }
 
 # =========================
-# Security settings
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://buildmywebsites-production.up.railway.app',
-    'http://localhost:8000',
- "https://your-react-app.vercel.app",
-
+# CORS (React on Vercel)
+# =========================
+CORS_ALLOWED_ORIGINS = [
+    "https://your-react-app.vercel.app",  # 🔁 change to real Vercel URL
+    "http://localhost:3000",
 ]
 
+CORS_ALLOW_CREDENTIALS = True
 
+# =========================
+# CSRF
+# =========================
+CSRF_TRUSTED_ORIGINS = [
+    "https://buildmywebsites-production.up.railway.app",
+    "https://your-react-app.vercel.app",  # 🔁 change to real Vercel URL
+    "http://localhost:3000",
+]
+
+# =========================
+# Static & Media files
+# =========================
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# =========================
+# Internationalization
+# =========================
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
+
+# =========================
+# Default primary key
+# =========================
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =========================
+# Production security
 # =========================
 SECURE_SSL_REDIRECT = ON_RAILWAY
 SESSION_COOKIE_SECURE = ON_RAILWAY

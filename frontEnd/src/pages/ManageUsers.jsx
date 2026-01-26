@@ -27,7 +27,7 @@ const ManageUsers = () => {
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
       // We use PATCH because we are only updating one field (is_active)
-      await axios.patch(`http://127.0.0.1:8000/admin/users/${userId}/`, {
+      await axios.patch(`https://buildmywebsites-production.up.railway.app/users/${userId}/`, {
         is_active: !currentStatus,
       });
 

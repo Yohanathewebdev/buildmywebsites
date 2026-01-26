@@ -36,7 +36,7 @@ const AdminEditService = () => {
   const fetchService = async () => {
     try {
       const res = await axios.get(
-        `http://127.0.0.1:8000/api/services/${id}/`,
+        "https://buildmywebsites-production.up.railway.app/api/services,${id}/",
         {
           headers: {
             Authorization: `Token ${user.token}`,

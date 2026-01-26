@@ -23,7 +23,7 @@ const AdminUsers = () => {
   // 📥 Fetch users
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/users/", {
+      const res = await axios.get("https://buildmywebsites-production.up.railway.app/users/", {
         headers: { Authorization: `Token ${user.token}` },
       });
 

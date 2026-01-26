@@ -14,7 +14,7 @@ const Dashboard = () => {
   // Fetch services from backend
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/services/")
+      .get("https://buildmywebsites-production.up.railway.app/api/services")
       .then((res) => {
         setServices(res.data);
         setLoading(false);

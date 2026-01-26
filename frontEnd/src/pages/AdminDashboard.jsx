@@ -28,7 +28,7 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         const res = await axios.get(
-          "http://127.0.0.1:8000/admin/dashboard/"
+          "https://buildmywebsites-production.up.railway.app/admin/dashboard",
         );
         setStats(res.data);
       } catch (err) {

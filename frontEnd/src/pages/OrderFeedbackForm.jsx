@@ -12,7 +12,7 @@ const OrderFeedbackForm = ({ order, onClose }) => {
     setLoading(true);
     try {
       await axios.post(
-        "http://127.0.0.1:8000/orders/feedback/",
+        "https://buildmywebsites-production.up.railway.app/orders/feedback/",
         {
           order: order.id,
           rating,

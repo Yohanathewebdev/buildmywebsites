@@ -27,7 +27,7 @@ const MyOrders = () => {
   const fetchOrders = async () => {
     try {
       const res = await axios.get(
-        "http://127.0.0.1:8000/orders/my/",
+        "https://buildmywebsites-production.up.railway.app/orders/my/",
         {
           headers: { Authorization: `Token ${user.token}` },
         }

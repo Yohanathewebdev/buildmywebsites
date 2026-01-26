@@ -50,7 +50,7 @@ const AdminOrders = () => {
   const updateStatus = async (orderId, newStatus) => {
     try {
       await axios.patch(
-        `http://127.0.0.1:8000/orders/${orderId}/`,
+        "https://buildmywebsites-production.up.railway.app/order/${orderId}/",
         { status: newStatus },
         {
           headers: {

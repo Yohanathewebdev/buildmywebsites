@@ -5,7 +5,7 @@ export async function fetchServices(token = null) {
       ? { Authorization: `Token ${token}` }
       : {};
     
-    const response = await fetch("http://127.0.0.1:8000/api/services/", { headers });
+    const response = await fetch("https://buildmywebsites-production.up.railway.app/api/services/", { headers });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

@@ -50,7 +50,7 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/users/register/", {
+      const response = await axios.post("https://buildmywebsites-production.up.railway.app/users/register/", {
         full_name: fullName,
         username,
         email,

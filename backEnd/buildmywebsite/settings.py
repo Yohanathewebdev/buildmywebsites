@@ -17,7 +17,7 @@ ON_RAILWAY = "RAILWAY_STATIC_URL" in os.environ
 # =========================
 SECRET_KEY = os.environ.get(
     "SECRET_KEY",
-    "unsafe-dev-secret-key-change-this"
+    "ni@4=gb&$u*u3qxoqdnc9f-)zvfpy*pn&q-091m434&ranbwld"  # fallback for dev
 )
 
 DEBUG = not ON_RAILWAY
@@ -27,6 +27,10 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "buildmywebsites-production.up.railway.app",
 ]
+
+# ======== Fix for Railway SSL / HTTPS redirect loop ========
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # =========================
 # Application definition
@@ -121,7 +125,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # =========================
-# Django REST Framework (API SAFE FOR REACT)
+# Django REST Framework
 # =========================
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -136,18 +140,18 @@ REST_FRAMEWORK = {
 # CORS (React on Vercel)
 # =========================
 CORS_ALLOWED_ORIGINS = [
-    "https://your-react-app.vercel.app",  # 🔁 change to real Vercel URL
+    "https://your-react-app.vercel.app",  # 🔁 replace with real Vercel URL
     "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 # =========================
-# CSRF
+# CSRF trusted origins
 # =========================
 CSRF_TRUSTED_ORIGINS = [
     "https://buildmywebsites-production.up.railway.app",
-    "https://your-react-app.vercel.app",  # 🔁 change to real Vercel URL
+    "https://your-react-app.vercel.app",  # 🔁 replace with real Vercel URL
     "http://localhost:3000",
 ]
 

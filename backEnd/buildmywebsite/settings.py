@@ -13,7 +13,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =========================
 # Environment Detection
 # =========================
-ON_RAILWAY = os.environ.get("RAILWAY_ENV") == "production"
+
+
+ON_RAILWAY = "RAILWAY_STATIC_URL" in os.environ
+DEBUG = not ON_RAILWAY
+
+CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+}
+
 
 # =========================
 # Core settings
@@ -136,7 +148,7 @@ REST_FRAMEWORK = {
 CSRF_TRUSTED_ORIGINS = [
     'https://buildmywebsites-production.up.railway.app',
     'http://localhost:8000',
-    "https://your-react-app.vercel.app",
+ "https://your-react-app.vercel.app",
 
 ]
 

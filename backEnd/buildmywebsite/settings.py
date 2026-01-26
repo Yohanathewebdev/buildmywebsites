@@ -19,7 +19,8 @@ ON_RAILWAY = os.environ.get("RAILWAY_ENV") == "production"
 # Core settings
 # =========================
 DEBUG = not ON_RAILWAY
-ALLOWED_HOSTS = ["*"] if ON_RAILWAY else ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'buildmywebsites-production.up.railway.app']
+
 
 ROOT_URLCONF = "buildmywebsite.urls"
 WSGI_APPLICATION = "buildmywebsite.wsgi.application"

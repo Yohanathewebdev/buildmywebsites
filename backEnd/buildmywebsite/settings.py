@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 import dj_database_url
 
+
+
+SECRET_KEY = "ni@4=gb&$u*u3qxoqdnc9f-)zvfpy*pn&q-091m434&ranbwld"
 # =========================
 # Paths
 # =========================
@@ -70,4 +73,59 @@ MIDDLEWARE = [
 ]
 
 # =========================
-# Templates (
+# Templates (needed for admin & DRF browsable API)
+# =========================
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],  # optional for custom templates
+        "APP_DIRS": True,                  # finds templates in apps automatically
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+# =========================
+# Static & Media files
+# =========================
+STATIC_URL = "/static/"
+# No STATICFILES_DIRS needed if React handles frontend
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# =========================
+# Custom User
+# =========================
+AUTH_USER_MODEL = "website.User"
+
+# =========================
+# Authentication Backends
+# =========================
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",  # default
+    "website.auth_website.EmailBackend",
+    "website.backends.EmailBackend",
+]
+
+# =========================
+# Django REST Framework
+# =========================
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+}
+
+# =========================
+# Security settings
+# =========================
+SECURE_SSL_REDIRECT = ON_RAILWAY
+SESSION_COOKIE_SECURE = ON_RAILWAY
+CSRF_COOKIE_SECURE = ON_RAILWAY

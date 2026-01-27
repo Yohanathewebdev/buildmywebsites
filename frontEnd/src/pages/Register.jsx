@@ -1,14 +1,9 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserContext } from "../UserContext";
 import axios from "axios";
 
-const API_URL = "https://buildmywebsites-production.up.railway.app";
-
 const Register = () => {
-  const { setUser } = useContext(UserContext);
   const navigate = useNavigate();
-
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -17,75 +12,80 @@ const Register = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Get API base URL from environment variable (Vercel-friendly)
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // Simple email validation
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
-    // ======================
-    // Client-side validation
-    // ======================
-    if (fullName.trim().length < 3) {
-      return setError("Full Name must be at least 3 characters");
+    // Client-side validations
+    if (fullName.length < 3) {
+      setError("Full name must be at least 3 characters");
+      return;
     }
-
-    if (username.trim().length < 3 || username.includes(" ")) {
-      return setError("Username must be at least 3 characters and contain no spaces");
+    if (username.length < 3 || username.includes(" ")) {
+      setError("Username must be at least 3 characters and contain no spaces");
+      return;
     }
-
     if (!validateEmail(email)) {
-      return setError("Please enter a valid email address");
+      setError("Enter a valid email address");
+      return;
     }
-
     if (password.length < 6) {
-      return setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters");
+      return;
     }
-
     if (password !== confirmPassword) {
-      return setError("Passwords do not match");
+      setError("Passwords do not match");
+      return;
     }
-
-    setLoading(true);
 
     try {
+      setLoading(true);
+
+      // Make POST request to backend
       const response = await axios.post(
         `${API_URL}/users/register/`,
         {
           full_name: fullName,
-          username: username.toLowerCase(),
-          email: email.toLowerCase(),
+          username,
+          email,
           password,
         },
         {
           headers: {
             "Content-Type": "application/json",
           },
-          withCredentials: true, // ✅ REQUIRED for Django
+          timeout: 10000, // 10 seconds timeout for cold start
         }
       );
 
-      const userData = response.data;
-
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
+      console.log("REGISTER SUCCESS:", response.data);
 
       alert("Registration successful! Please login to your account.");
       navigate("/login");
 
     } catch (err) {
-      console.error("Registration error:", err);
+      console.error(err);
 
-      if (err.response?.data) {
-        // Show backend validation error
-        const backendError =
-          err.response.data.detail ||
-          err.response.data.error ||
-          "Registration failed. Please check your details.";
-        setError(backendError);
-      } else {
-        setError("Server unreachable. Please try again later.");
+      // Network error / server unreachable
+      if (!err.response) {
+        setError(
+          "Server unreachable. The backend may be asleep. Please try again in a few seconds."
+        );
+        return;
       }
+
+      // Backend validation errors
+      const data = err.response.data;
+      if (data.username) setError("Username already exists.");
+      else if (data.email) setError("Email already exists.");
+      else setError(data.detail || "Registration failed. Please try again.");
+
     } finally {
       setLoading(false);
     }
@@ -102,14 +102,10 @@ const Register = () => {
         }}
       >
         <h4 className="text-center mb-4 fw-bold text-white">
-          Register here to place order
+          Create an Account
         </h4>
 
-        {error && (
-          <p className="text-center fw-bold text-danger">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-center fw-bold text-danger">{error}</p>}
 
         <form onSubmit={handleRegister}>
           <div className="mb-3">
@@ -157,7 +153,9 @@ const Register = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label text-white fw-bold">Confirm Password</label>
+            <label className="form-label text-white fw-bold">
+              Confirm Password
+            </label>
             <input
               type="password"
               className="form-control"

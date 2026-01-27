@@ -12,7 +12,7 @@ const Register = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = "https://buildmywebsites-production.up.railway.app";
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 

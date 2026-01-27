@@ -13,7 +13,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   // Get API base URL from environment variable (Vercel-friendly)
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = "https://buildmywebsites-production.up.railway.app/users/register/"
 
   // Simple email validation
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);

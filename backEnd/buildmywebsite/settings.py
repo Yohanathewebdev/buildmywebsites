@@ -140,7 +140,7 @@ REST_FRAMEWORK = {
 # CORS (React on Vercel)
 # =========================
 CORS_ALLOWED_ORIGINS = [
-    "https://buildmywebsites.vercel.app/",  # 🔁 replace with real Vercel URL
+    "https://buildmywebsites.vercel.app",  # 🔁 replace with real Vercel URL
     "http://localhost:3000",
 ]
 
@@ -151,7 +151,7 @@ CORS_ALLOW_CREDENTIALS = True
 # =========================
 CSRF_TRUSTED_ORIGINS = [
     "https://buildmywebsites-production.up.railway.app",
-    "https://buildmywebsites.vercel.app/",  # 🔁 replace with real Vercel URL
+    "https://buildmywebsites.vercel.app",  # 🔁 replace with real Vercel URL
     "http://localhost:3000",
 ]
 

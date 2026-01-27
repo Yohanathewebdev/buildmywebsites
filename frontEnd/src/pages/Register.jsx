@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { UserContext } from "../UserContext";
 import axios from "axios";
 
+const API_URL = "https://buildmywebsites-production.up.railway.app";
+
 const Register = () => {
   const { setUser } = useContext(UserContext);
   const navigate = useNavigate();
@@ -13,96 +15,103 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Simple email validation
-  const validateEmail = (email) => {
-    return /\S+@\S+\.\S+/.test(email);
-  };
+  const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
-    // ✅ Input validations
-    if (fullName.length < 3) {
-      setError("Full Name must be at least 3 characters");
-      return;
+    // ======================
+    // Client-side validation
+    // ======================
+    if (fullName.trim().length < 3) {
+      return setError("Full Name must be at least 3 characters");
     }
 
-    if (username.length < 3 || username.includes(" ")) {
-      setError("Username must be at least 3 characters and contain no spaces");
-      return;
+    if (username.trim().length < 3 || username.includes(" ")) {
+      return setError("Username must be at least 3 characters and contain no spaces");
     }
 
     if (!validateEmail(email)) {
-      setError("Please enter a valid email address");
-      return;
+      return setError("Please enter a valid email address");
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
+      return setError("Password must be at least 6 characters");
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
+      return setError("Passwords do not match");
     }
 
-    try {
-      const response = await axios.post("https://buildmywebsites-production.up.railway.app/users/register/", {
-        full_name: fullName,
-        username,
-        email,
-        password,
-      });
+    setLoading(true);
 
-      const userData = {
-        id: response.data.id,
-        email: response.data.email,
-        full_name: response.data.full_name,
-      };
+    try {
+      const response = await axios.post(
+        `${API_URL}/users/register/`,
+        {
+          full_name: fullName,
+          username: username.toLowerCase(),
+          email: email.toLowerCase(),
+          password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // ✅ REQUIRED for Django
+        }
+      );
+
+      const userData = response.data;
 
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
-      alert(`Registration successful! please login to your account`);
 
+      alert("Registration successful! Please login to your account.");
       navigate("/login");
+
     } catch (err) {
-      console.log(err);
-      setError("Registration failed. Please check your details.");
+      console.error("Registration error:", err);
+
+      if (err.response?.data) {
+        // Show backend validation error
+        const backendError =
+          err.response.data.detail ||
+          err.response.data.error ||
+          "Registration failed. Please check your details.";
+        setError(backendError);
+      } else {
+        setError("Server unreachable. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div
-      className="d-flex justify-content-center align-items-center vh-100 bg-light"
-      style={{ minHeight: "100vh" }}
-    >
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
       <div
         className="card p-4 shadow-lg"
         style={{
           width: "400px",
           borderRadius: "12px",
-          maxHeight: "90vh",
-          overflowY: "auto",
           backgroundColor: "#6A5ACD",
         }}
       >
-        {/* Register heading */}
-        <h4 className="text-center mb-4 fw-bold" style={{ color: "#ffff" }}>
+        <h4 className="text-center mb-4 fw-bold text-white">
           Register here to place order
         </h4>
 
-        {/* Error message */}
         {error && (
-          <p className="text-center fw-bold" style={{ color: "#ff4d4f", marginBottom: "15px" }}>
+          <p className="text-center fw-bold text-danger">
             {error}
           </p>
         )}
 
         <form onSubmit={handleRegister}>
-          {/* Full Name */}
           <div className="mb-3">
             <label className="form-label text-white fw-bold">Full Name</label>
             <input
@@ -111,11 +120,9 @@ const Register = () => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              style={{ borderColor: "#FFD700", backgroundColor: "#222", color: "#fff" }}
             />
           </div>
 
-          {/* Username */}
           <div className="mb-3">
             <label className="form-label text-white fw-bold">Username</label>
             <input
@@ -124,11 +131,9 @@ const Register = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              style={{ borderColor: "#FFD700", backgroundColor: "#222", color: "#fff" }}
             />
           </div>
 
-          {/* Email */}
           <div className="mb-3">
             <label className="form-label text-white fw-bold">Email</label>
             <input
@@ -137,11 +142,9 @@ const Register = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{ borderColor: "#FFD700", backgroundColor: "#222", color: "#fff" }}
             />
           </div>
 
-          {/* Password */}
           <div className="mb-3">
             <label className="form-label text-white fw-bold">Password</label>
             <input
@@ -150,11 +153,9 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{ borderColor: "#FFD700", backgroundColor: "#222", color: "#fff" }}
             />
           </div>
 
-          {/* Confirm Password */}
           <div className="mb-3">
             <label className="form-label text-white fw-bold">Confirm Password</label>
             <input
@@ -163,17 +164,18 @@ const Register = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              style={{ borderColor: "#FFD700", backgroundColor: "#222", color: "#fff" }}
             />
           </div>
 
-          {/* Register button */}
-          <button type="submit" className="btn btn-success w-100 fw-bold mt-2">
-            Register
+          <button
+            type="submit"
+            className="btn btn-success w-100 fw-bold"
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
-        {/* Login link */}
         <p className="mt-3 text-center text-white">
           Already have an account?{" "}
           <span

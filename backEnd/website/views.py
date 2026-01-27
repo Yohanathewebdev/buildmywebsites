@@ -1,23 +1,25 @@
-from django.contrib.auth import get_user_model, authenticate
-from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
-from rest_framework import generics, permissions, serializers
+from rest_framework import generics, permissions
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 
 from .models import Service, Order, OrderFeedback
 from .serializers import (
+    EmailAuthTokenSerializer,
     ServicePublicSerializer,
     ServicePrivateSerializer,
     UserSerializer,
     UserCreateSerializer,
     OrderSerializer,
     OrderCreateSerializer,
-    OrderFeedbackSerializer,
+    OrderFeedbackSerializer
 )
 from .permisions import IsAdminOrReadOnly
 
@@ -42,6 +44,59 @@ def api_root(request, format=None):
 
 
 # =====================================================
+# Admin: Toggle User Active / Disabled
+# =====================================================
+class AdminToggleUserView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def patch(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+
+        # 🔒 Protect admins
+        if user.is_superuser or user.is_staff:
+            return Response(
+                {"detail": "Cannot modify admin account"},
+                status=403
+            )
+
+        user.is_active = not user.is_active
+        user.save(update_fields=["is_active"])
+
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "is_active": user.is_active,
+        })
+
+
+# =====================================================
+# Services
+# =====================================================
+class ServiceList(generics.ListCreateAPIView):
+    queryset = Service.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_serializer_class(self):
+        return (
+            ServicePrivateSerializer
+            if self.request.user.is_authenticated
+            else ServicePublicSerializer
+        )
+
+
+class ServiceDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Service.objects.all()
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_serializer_class(self):
+        return (
+            ServicePrivateSerializer
+            if self.request.user.is_authenticated
+            else ServicePublicSerializer
+        )
+
+
+# =====================================================
 # Users
 # =====================================================
 class UserListView(generics.ListAPIView):
@@ -63,40 +118,26 @@ class UserDetailView(generics.RetrieveAPIView):
 
 
 # =====================================================
-# Email Login
+# Authentication (Token Login)
 # =====================================================
-class EmailAuthTokenSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+class CustomAuthToken(ObtainAuthToken):
+    serializer_class = EmailAuthTokenSerializer
 
-    def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-
-        try:
-            user_obj = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError("Invalid email or password")
-
-        # Use username internally to authenticate
-        user = authenticate(username=user_obj.username, password=password)
-        if not user:
-            raise serializers.ValidationError("Invalid email or password")
-
-        if not user.is_active:
-            raise serializers.ValidationError("Account is disabled")
-
-        attrs["user"] = user
-        return attrs
-
-
-class CustomAuthToken(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        serializer = EmailAuthTokenSerializer(data=request.data)
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data,
+            context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
+
         user = serializer.validated_data["user"]
+
+        # 🔒 Block disabled users
+        if not user.is_active:
+            return Response(
+                {"detail": "Account is disabled"},
+                status=403
+            )
 
         token, _ = Token.objects.get_or_create(user=user)
 
@@ -110,45 +151,7 @@ class CustomAuthToken(APIView):
 
 
 # =====================================================
-# Admin: Toggle User Active / Disabled
-# =====================================================
-class AdminToggleUserView(APIView):
-    permission_classes = [permissions.IsAdminUser]
-
-    def patch(self, request, pk):
-        user = get_object_or_404(User, pk=pk)
-        if user.is_superuser or user.is_staff:
-            return Response({"detail": "Cannot modify admin account"}, status=403)
-        user.is_active = not user.is_active
-        user.save(update_fields=["is_active"])
-        return Response({
-            "id": user.id,
-            "email": user.email,
-            "is_active": user.is_active,
-        })
-
-
-# =====================================================
-# Services
-# =====================================================
-class ServiceList(generics.ListCreateAPIView):
-    queryset = Service.objects.all()
-    permission_classes = [IsAdminOrReadOnly]
-
-    def get_serializer_class(self):
-        return ServicePrivateSerializer if self.request.user.is_authenticated else ServicePublicSerializer
-
-
-class ServiceDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Service.objects.all()
-    permission_classes = [IsAdminOrReadOnly]
-
-    def get_serializer_class(self):
-        return ServicePrivateSerializer if self.request.user.is_authenticated else ServicePublicSerializer
-
-
-# =====================================================
-# Orders
+# Orders (User + Admin)
 # =====================================================
 class OrderCreateView(generics.CreateAPIView):
     queryset = Order.objects.all()
@@ -179,20 +182,6 @@ class OrderUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAdminUser]
 
 
-class CreateOrderFeedbackView(generics.CreateAPIView):
-    serializer_class = OrderFeedbackSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class AdminFeedbackListView(generics.ListAPIView):
-    queryset = OrderFeedback.objects.all().select_related("order", "user")
-    serializer_class = OrderFeedbackSerializer
-    permission_classes = [permissions.IsAdminUser]
-
-
 # =====================================================
 # Admin Dashboard Stats
 # =====================================================
@@ -207,3 +196,17 @@ class AdminDashboardStatsView(generics.GenericAPIView):
             "pendingOrders": Order.objects.filter(status="pending").count(),
             "completedOrders": Order.objects.filter(status="completed").count(),
         })
+
+
+class CreateOrderFeedbackView(generics.CreateAPIView):
+    serializer_class = OrderFeedbackSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class AdminFeedbackListView(generics.ListAPIView):
+    queryset = OrderFeedback.objects.all().select_related("order", "user")
+    serializer_class = OrderFeedbackSerializer
+    permission_classes = [permissions.IsAdminUser]

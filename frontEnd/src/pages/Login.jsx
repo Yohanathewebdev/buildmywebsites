@@ -11,6 +11,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const API_URL = "https://buildmywebsites-production.up.railway.app";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ const Login = () => {
 
     try {
       const { data } = await axios.post(
-        "https://buildmywebsites-production.up.railway.app/users/login/",
+        '${API_URL} /users/login/',
         { email, password }
       );
 

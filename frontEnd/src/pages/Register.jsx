@@ -12,17 +12,15 @@ const Register = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Get API base URL from environment variable (Vercel-friendly)
-  const API_URL = "https://buildmywebsites-production.up.railway.app"
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  // Simple email validation
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Client-side validations
+    // Frontend validations
     if (fullName.length < 3) {
       setError("Full name must be at least 3 characters");
       return;
@@ -47,7 +45,6 @@ const Register = () => {
     try {
       setLoading(true);
 
-      // Make POST request to backend
       const response = await axios.post(
         `${API_URL}/users/register/`,
         {
@@ -57,22 +54,18 @@ const Register = () => {
           password,
         },
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          timeout: 10000, // 10 seconds timeout for cold start
+          headers: { "Content-Type": "application/json" },
+          timeout: 10000, // 10s timeout for cold start
         }
       );
 
       console.log("REGISTER SUCCESS:", response.data);
-
       alert("Registration successful! Please login to your account.");
       navigate("/login");
 
     } catch (err) {
       console.error(err);
 
-      // Network error / server unreachable
       if (!err.response) {
         setError(
           "Server unreachable. The backend may be asleep. Please try again in a few seconds."
@@ -80,12 +73,19 @@ const Register = () => {
         return;
       }
 
-      // Backend validation errors
       const data = err.response.data;
-      if (data.username) setError("Username already exists.");
-      else if (data.email) setError("Email already exists.");
-      else setError(data.detail || "Registration failed. Please try again.");
 
+      // DRF validation errors handling
+      const messages = [];
+      for (const key in data) {
+        if (Array.isArray(data[key])) {
+          messages.push(`${key}: ${data[key].join(" ")}`);
+        } else if (typeof data[key] === "string") {
+          messages.push(`${key}: ${data[key]}`);
+        }
+      }
+
+      setError(messages.join(" | ") || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -95,15 +95,9 @@ const Register = () => {
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
       <div
         className="card p-4 shadow-lg"
-        style={{
-          width: "400px",
-          borderRadius: "12px",
-          backgroundColor: "#6A5ACD",
-        }}
+        style={{ width: "400px", borderRadius: "12px", backgroundColor: "#6A5ACD" }}
       >
-        <h4 className="text-center mb-4 fw-bold text-white">
-          Create an Account
-        </h4>
+        <h4 className="text-center mb-4 fw-bold text-white">Create an Account</h4>
 
         {error && <p className="text-center fw-bold text-danger">{error}</p>}
 
@@ -153,9 +147,7 @@ const Register = () => {
           </div>
 
           <div className="mb-3">
-            <label className="form-label text-white fw-bold">
-              Confirm Password
-            </label>
+            <label className="form-label text-white fw-bold">Confirm Password</label>
             <input
               type="password"
               className="form-control"

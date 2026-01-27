@@ -140,7 +140,7 @@ REST_FRAMEWORK = {
 # CORS (React on Vercel)
 # =========================
 CORS_ALLOWED_ORIGINS = [
-    "https://your-react-app.vercel.app",  # 🔁 replace with real Vercel URL
+    "https://buildmywebsites.vercel.app/",  # 🔁 replace with real Vercel URL
     "http://localhost:3000",
 ]
 
@@ -151,7 +151,7 @@ CORS_ALLOW_CREDENTIALS = True
 # =========================
 CSRF_TRUSTED_ORIGINS = [
     "https://buildmywebsites-production.up.railway.app",
-    "https://your-react-app.vercel.app",  # 🔁 replace with real Vercel URL
+    "https://buildmywebsites.vercel.app/",  # 🔁 replace with real Vercel URL
     "http://localhost:3000",
 ]
 
@@ -181,7 +181,7 @@ USE_TZ = True
 # =========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# =========================
+# =========================s
 # Production security
 # =========================
 SECURE_SSL_REDIRECT = ON_RAILWAY

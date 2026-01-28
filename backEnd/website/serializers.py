@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, get_user_model
 from .models import Service, ServiceImage, Order
 from .models import OrderFeedback
 
+User = get_user_model()
+
 # =========================
 # Service Serializers
 # =========================
@@ -74,6 +76,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 # =========================
 
 
+
 class EmailAuthTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -85,12 +88,13 @@ class EmailAuthTokenSerializer(serializers.Serializer):
         if not email or not password:
             raise serializers.ValidationError("Email and password are required.")
 
+        # 1️⃣ Find user by email
         try:
             user_obj = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError("Invalid email or password.")
 
-        # ✅ THIS IS THE MAGIC LINE
+        # 2️⃣ Authenticate using USERNAME (Django rule)
         user = authenticate(
             username=user_obj.username,
             password=password
@@ -102,9 +106,9 @@ class EmailAuthTokenSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError("Account is disabled.")
 
+        # 3️⃣ Success
         attrs["user"] = user
         return attrs
-
 # =========================
 # Order Serializers
 # =========================

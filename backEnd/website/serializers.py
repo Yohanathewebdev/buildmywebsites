@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.hashers import check_password
 from .models import Service, ServiceImage, Order
 from .models import OrderFeedback
 
-User = get_user_model()
+
 
 # =========================
 # Service Serializers
@@ -77,6 +78,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 
+
+
+User = get_user_model()
+
 class EmailAuthTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -85,28 +90,17 @@ class EmailAuthTokenSerializer(serializers.Serializer):
         email = attrs.get("email")
         password = attrs.get("password")
 
-        if not email or not password:
-            raise serializers.ValidationError("Email and password are required.")
-
-        # 1️⃣ Find user by email
         try:
-            user_obj = User.objects.get(email=email)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError("Invalid email or password.")
+            raise serializers.ValidationError("Invalid email or password")
 
-        # 2️⃣ Authenticate using USERNAME (Django rule)
-        user = authenticate(
-            username=user_obj.username,
-            password=password
-        )
-
-        if not user:
-            raise serializers.ValidationError("Invalid email or password.")
+        if not user.check_password(password):
+            raise serializers.ValidationError("Invalid email or password")
 
         if not user.is_active:
-            raise serializers.ValidationError("Account is disabled.")
+            raise serializers.ValidationError("User account is disabled")
 
-        # 3️⃣ Success
         attrs["user"] = user
         return attrs
 # =========================

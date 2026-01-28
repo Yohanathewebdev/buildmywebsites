@@ -1,10 +1,7 @@
 from rest_framework import serializers
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
-from .models import Service, ServiceImage, Order
-from .models import OrderFeedback
-
-
+from .models import Service, ServiceImage, Order, OrderFeedback
 
 # =========================
 # Service Serializers
@@ -49,6 +46,7 @@ class ServicePrivateSerializer(serializers.ModelSerializer):
             "images",
         ]
 
+
 # =========================
 # User Serializers
 # =========================
@@ -70,13 +68,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = ["email", "username", "full_name", "password"]
 
     def create(self, validated_data):
+        # ✅ Uses Django's create_user to hash password properly
         return User.objects.create_user(**validated_data)
+
 
 # =========================
 # Authentication Serializer
 # =========================
-
-User = get_user_model()
 
 class EmailAuthTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -86,11 +84,13 @@ class EmailAuthTokenSerializer(serializers.Serializer):
         email = attrs.get("email")
         password = attrs.get("password")
 
+        # 🔑 Fetch user by email
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError("Invalid email or password.")
 
+        # 🔑 Check hashed password
         if not user.check_password(password):
             raise serializers.ValidationError("Invalid email or password.")
 
@@ -99,6 +99,8 @@ class EmailAuthTokenSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+
 # =========================
 # Order Serializers
 # =========================
@@ -121,7 +123,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "description",
             "document",
         ]
- 
+
+    def create(self, validated_data):
+        # ✅ Automatically assign current user
+        request = self.context.get("request")
+        return Order.objects.create(user=request.user, **validated_data)
+
 
 class OrderFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
@@ -137,17 +144,15 @@ class OrderFeedbackSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         order = data["order"]
-        request = self.context["request"]
+        request = self.context.get("request")
 
         if order.user != request.user:
-            raise serializers.ValidationError("Not your order")
+            raise serializers.ValidationError("Not your order.")
 
         if order.status != "completed":
-            raise serializers.ValidationError("Order not completed")
+            raise serializers.ValidationError("Order not completed.")
 
         if hasattr(order, "feedback"):
-            raise serializers.ValidationError("Feedback already submitted")
+            raise serializers.ValidationError("Feedback already submitted.")
 
         return data
-
-   

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
+from django.contrib.auth import aauthenticate,get_user_model
 from django.contrib.auth.hashers import check_password
 from .models import Service, ServiceImage, Order, OrderFeedback
 
@@ -81,26 +81,22 @@ class EmailAuthTokenSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        email = attrs.get("email")
+        email = attrs.get("email").strip()  # remove accidental spaces
         password = attrs.get("password")
 
-        # 🔑 Fetch user by email
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError("Invalid email or password.")
-
-        # 🔑 Check hashed password
-        if not user.check_password(password):
-            raise serializers.ValidationError("Invalid email or password.")
+        if email and password:
+            # Use Django authenticate for your custom user model
+            user = authenticate(email=email, password=password)
+            if not user:
+                raise serializers.ValidationError("Invalid email or password.")
+        else:
+            raise serializers.ValidationError("Email and password required.")
 
         if not user.is_active:
             raise serializers.ValidationError("Account is disabled.")
 
         attrs["user"] = user
         return attrs
-
-
 # =========================
 # Order Serializers
 # =========================

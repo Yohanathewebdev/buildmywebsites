@@ -11,7 +11,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   const API_URL = "https://buildmywebsites-production.up.railway.app";
 
   const handleLogin = async (e) => {
@@ -20,12 +20,19 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data } = await axios.post(
-             `${API_URL}/users/login/`,
-        { email, password }
+      // ✅ POST login request
+      const response = await axios.post(
+        `${API_URL}/users/login/`,
+        { email, password },
+        {
+          headers: { "Content-Type": "application/json" },
+          timeout: 10000, // 10s timeout for cold start
+        }
       );
 
-      // ✅ SINGLE SOURCE OF TRUTH (user + token together)
+      const data = response.data;
+
+      // ✅ Save user and token
       const userData = {
         id: data.user_id,
         email: data.email,
@@ -34,18 +41,25 @@ const Login = () => {
         token: data.token,
       };
 
-      // ✅ Save user globally
       setUser(userData);
-
-      // ✅ Persist across refresh
       localStorage.setItem("user", JSON.stringify(userData));
 
       // ✅ Redirect by role
       navigate(userData.is_admin ? "/admin/dashboard" : "/darshboard");
-
     } catch (err) {
       console.error("Login error:", err.response?.data || err.message);
-      setError("Invalid email or password");
+
+      if (!err.response) {
+        setError(
+          "Server unreachable. Backend may be asleep. Try again in a few seconds."
+        );
+      } else if (err.response.status === 403) {
+        setError("Account is disabled. Contact admin.");
+      } else if (err.response.status === 400) {
+        setError("Invalid email or password.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -66,13 +80,10 @@ const Login = () => {
         </h4>
 
         {error && (
-          <div className="alert alert-danger text-center fw-bold">
-            {error}
-          </div>
+          <div className="alert alert-danger text-center fw-bold">{error}</div>
         )}
 
         <form onSubmit={handleLogin}>
-          {/* Email */}
           <div className="mb-3">
             <label className="form-label text-white fw-bold">Email</label>
             <input
@@ -89,7 +100,6 @@ const Login = () => {
             />
           </div>
 
-          {/* Password */}
           <div className="mb-3">
             <label className="form-label text-white fw-bold">Password</label>
             <input
@@ -115,7 +125,6 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             className="btn btn-success w-100 fw-bold"

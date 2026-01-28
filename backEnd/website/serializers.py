@@ -81,7 +81,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 User = get_user_model()
-
 class EmailAuthTokenSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -90,16 +89,17 @@ class EmailAuthTokenSerializer(serializers.Serializer):
         email = attrs.get("email")
         password = attrs.get("password")
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError("Invalid email or password")
+        # 🔥 THIS IS THE KEY FIX
+        user = authenticate(
+            username=email,   # MUST be "username"
+            password=password
+        )
 
-        if not user.check_password(password):
-            raise serializers.ValidationError("Invalid email or password")
+        if not user:
+            raise serializers.ValidationError("Invalid email or password.")
 
         if not user.is_active:
-            raise serializers.ValidationError("User account is disabled")
+            raise serializers.ValidationError("Account is disabled.")
 
         attrs["user"] = user
         return attrs
